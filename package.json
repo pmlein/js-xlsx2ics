@@ -1,0 +1,27 @@
+{
+  "name": "js-xlsx2ics",
+  "version": "1.0.0",
+  "description": "Convert from xlsx to ics",
+  "main": "server.js",
+  "dependencies": {
+    "xlsx": "^0.11.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmlein/js-xlsx2ics.git"
+  },
+  "keywords": [
+    "xlsx",
+    "ics"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pmlein/js-xlsx2ics/issues"
+  },
+  "homepage": "https://github.com/pmlein/js-xlsx2ics#readme"
+}

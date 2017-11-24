@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"/>
+    <title>Convert Excel to ICalendar</title>
+
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css"> 
+   <!-- <link rel="stylesheet" href="sheetjs.css"> -->
+    <style>
+ #drop{
+	border:2px dashed #bbb;
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;
+	border-radius:5px;
+	padding:25px;
+	text-align:center;
+	font:20pt bold,"Vollkorn";color:#bbb
+}
+#textbox {
+  width: 300px;
+  height: 150px;
+}
+
+a { text-decoration: none }
+    </style>
+</head>
+<body>
+<!-- SheetJS js-xlsx library -->
+<script type="text/javascript" src="//rawgit.com/SheetJS/js-xlsx/master/shim.js"></script>
+<script type="text/javascript" src="//unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+<!-- FileSaver.js is the library of choice for Chrome -->
+<script type="text/javascript" src="//rawgit.com/eligrey/Blob.js/master/Blob.js"></script>
+<script type="text/javascript" src="//rawgit.com/eligrey/FileSaver.js/master/FileSaver.js"></script>
+
+<!-- FileSaver doesn't work in older IE and newer Safari; Downloadify is the flash fallback -->
+<!-- <script type="text/javascript" src="swfobject.js"></script>
+<script type="text/javascript" src="downloadify.min.js"></script>
+<script type="text/javascript" src="base64.min.js"></script> 
+-->
+
+<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.0/build/alertify.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-handsontable/0.10.2/jquery.handsontable.full.min.js"></script>
+<link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-handsontable/0.10.2/jquery.handsontable.full.min.css">
+<!-- <link rel="stylesheet" media="screen" href="hot/samples.css"> -->
+<!-- <link rel="stylesheet" media="screen" href="alertify.css"> -->
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.11.0/build/css/alertify.min.css"/>
+
+    
+        
+            <h1>Convert Excel to ICalendar</h1>
+            <div id="left">
+
+                <h3>Drop source excel file to the page: </h3>
+                <div id="buttons"></div>
+                </div>
+            
+                
+                <pre id="out"></pre>
+                <div id="drop">Drop a spreadsheet file here to see sheet data</div>
+        <div>
+            <p>Drop a spreadsheet anywhere on the page<br/>
+                Powered by <b><a href="http://sheetjs.com">SheetJS</a></b><br/><br/></p>
+        </div>
+       
+       <!--  <input type="file" name="xlfile" id="xlf" /> ... or click here to select a file  -->
+
+        </div>
+
+
+        <div id="right">
+            <div id="header">
+               
+                <b>Best viewed in Chrome.</b>
+                </p>
+            </div>
+            <div><br /><br />
+                <label>After dragging a file, IA-rows will be selected from worksheets&nbsp; &nbsp;</label>
+                <input type="text" id="sql" disabled="true" class="winpt"/>
+            </div>
+            <pre id="sqlpre">SQL Errors will show up here</pre>
+            <div id="hot" style="overflow: scroll" class="handsontable"></div>
+            <div id="tofile">
+                <textarea id="textbox" rows="10" cols="1"></textarea>
+                <button id="create">Create file</button> 
+            </div>
+            
+            <div id="footnote">
+                <p>This particular parser assumes that <b>the first row of every table is a header row.</b></p>
+
+                <b>NO SPREADSHEET DATA IS SENT TO ANY SERVER (parsing and rendering done in your browser)</b>
+                <p>This is a work in progress.</p>
+                
+            </div>
+        </div>
+
+        <script src="shim.js"></script>
+        <script type="text/javascript" src="//unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+        <script src="./public/spin.js"></script>
+        <script src="./public/dropsheet.js"></script>
+        <script src="./public/csf.js"></script>
+
+       <script src="./public/client.js"></script>
+        
+   
+  
+</body>
+</html>

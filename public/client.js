@@ -84,7 +84,7 @@ var _onsheet = function(json, cols) {
   Length
 */
 function sexqlit(data) {
-  console.log(data, data.rows, data.rows.length);
+  console.log('DATA: ', data, data.rows, data.rows.length);
   if(!data || data.length === 0) return; 
   var r = data.rows.item(0);
   var cols = Object.keys(r);
@@ -144,19 +144,24 @@ function prepstmt(s) {
    sname: Sheet name
 */
 function prepforsexql(ws, sname) {
+  console.log('Sheet: ', sname, '\n');
   if(!ws || !ws['!ref']) return;
-
+  
   var range = CSF.utils.decode_range(ws['!ref']);
+  console.log('Range: ', range, '\n');
   if(!range || !range.s || !range.e || range.s > range.e) return;
   /* resolve types */
-  var types = new Array(range.e.c-range.s.c+1);
+  
+  range.e.c=7;
 
+  var types = new Array(range.e.c-range.s.c+1); 
+  
   // names: column names
   var names = new Array(range.e.c-range.s.c+1);  
-  var R = range.s.r;
+  var R = range.s.r; // r:row
   for(var C = range.s.c; C<= range.e.c; ++C)
     names[C-range.s.c] = (ws[CSF.utils.encode_cell({c:C,r:R})]||{}).w;
-
+    names[(C-1)-range.s.c] = 'EA'; //b Col 8 EA-column, "ensiapuvastaavat" can be added
   for(var C = range.s.c; C<= range.e.c; ++C)
     for(R = range.s.r+1; R<= range.e.r; ++R)
       switch((ws[CSF.utils.encode_cell({c:C,r:R})]||{}).t) {
@@ -167,7 +172,6 @@ function prepforsexql(ws, sname) {
         default: break; /* if the cell doesnt exist */
       }
   // for each worksheet
-  console.log(names, range, types);
 
   /* update list, sheet name (sname) */
   //$buttons.innerHTML += "<h2>`" + sname + "`</h2>"
@@ -181,7 +185,8 @@ function prepforsexql(ws, sname) {
   prepstmt("CREATE TABLE `" + sname + "` (" + names.map(function(n, i) { return "`" + n + "` " + (types[i]||"TEXT"); }).join(", ") + ");" );
 
   /* insert data */
-  var eventDate = null; // date for each cell
+  var eventDate = null; // date for each cell even if it is empty in the original xlsx
+  //var emptyRow = false;
   for(R = range.s.r+1; R<= range.e.r; ++R) {
     var fields = [], values = [];
     for(var C = range.s.c; C<= range.e.c; ++C) {
@@ -193,6 +198,10 @@ function prepforsexql(ws, sname) {
       if(!cell) {
         if (!nextCell) continue;
       }
+      if(cell == null) {
+        console.log('NULL\n');
+        if (nextCell == null) continue;
+      }     
       // last given date to cell A
       if (C===0) {  // Empty date cell
          if (!cell) {
@@ -202,9 +211,12 @@ function prepforsexql(ws, sname) {
         }
       }
       fields.push("`" + names[C-range.s.c] + "`");
-      values.push(types[C-range.s.c] === "REAL" ? cell.v : '"' + cell.w + '"');
-    }
+      // Some junk in cells , empty spaces  etc.
+      if (!(cell == null))
+        values.push(types[C-range.s.c] === "REAL" ? cell.v : '"' + cell.w + '"');
+    }  
     prepstmt("INSERT INTO `" +sname+ "` (" + fields.join(", ") + ") VALUES (" + values.join(",") + ");");
+    
   }
 
 }
@@ -223,7 +235,8 @@ function formatDate(date) {
   var month = pad(tmpmonth[0].replace(/^\./,""), 2);
   var day = pad(tmpday[0].replace(/\.$/,""), 2);
  
-  return year.toString() + month + day;
+  //return year.toString() + month + day;
+  return '2018' + month + day;
 }
 
 function pad(num, size) {
@@ -233,14 +246,6 @@ function pad(num, size) {
 }
 
 function removeNbsp(str) {
-  alert(str);
-  /*for (var i = 0, len = str.length; i < len; i++) {
-    if (str[i] === "\u00a0") {
-    
-    }
-   
-    
-  } */
   var newStr = str.replace(/\u00a0/g, ' ');
   return newStr;
 }
@@ -265,7 +270,7 @@ function sexqlify(wb) {
   wb.SheetNames.forEach(function(s, idx, array) { 
     prepforsexql(wb.Sheets[s], s); 
     var num = idx+1; // order number of work sheet to keep order in query results (for filter)
-    sheetUnionQuery += "SELECT * , " + num + " AS FILTER FROM " + s + " WHERE trim(Joukkue) = 'IA' ";
+    sheetUnionQuery += "SELECT * , " + num + " AS FILTER FROM " + s + " WHERE trim(Joukkue) LIKE '%IA%' ";
     if (idx < array.length - 1) { 
       sheetUnionQuery += " UNION ALL ";
     }
@@ -302,13 +307,13 @@ function writeEvents(json, cols) {
     var tshour = pad(timestamp.getHours(),2);
     var tsmin = pad(timestamp.getMinutes(),2);
     var tssec = pad(timestamp.getSeconds(),2);
-    var ts = tsyear.toString() + tsmonth.toString() + tsdate.toString() + "T" + tshour.toString() 
-      +tsmin.toString() + tssec.toString();
+    var ts = tsyear.toString() + tsmonth.toString() + tsdate.toString() + "T" + tshour.toString() +'0000';
+
 
 
     
     events += "DTSTAMP:" + ts + "\n";
-    // UID:CSVConvert331787ccfbb62788f65ae113f7e9ddce UID:19970901T130000Z-123401@example.com
+    // UID: unique ID
     events += "UID:" + ts + "-" + i + "\r\n";
     events += "CLASS:PRIVATE\r\n";
     events += "CREATED:" + ts + "\r\n";
@@ -318,6 +323,8 @@ function writeEvents(json, cols) {
     var location = "";
     var starttime = "";
     var endtime = "";
+    var tmpstarttime = "";
+    var tmpendtime = "";
     var ea = "";
 
     for (var key in obj) {
@@ -338,22 +345,28 @@ function writeEvents(json, cols) {
               break;
         // DTSTART:20171125T120000Z
           case cols[1]: // Alkaa start time
-              var shour = pad(val.match(/^\d+/),2); 
+              // find hour
+              // pad: adds leading zero
+              var tmpshour = val.match(/^\d+/); 
+              var shour = pad(parseInt(tmpshour),2); 
               var smin = pad(val.match(/\d+$/),2);
               starttime = shour + ":" + smin;
-              events += "T" + shour + smin + "00\r\n";
+              tmpstarttime = tmpshour + ":" + smin;
+              events += "T" + shour + smin + "00\r\n"; 
               break;
           case cols[2]: // Päättyy End time   
-              var ehour = pad(val.match(/^\d+/),2); 
+              var tmpehour = val.match(/^\d+/); 
+              var ehour = pad(parseInt(tmpehour),2);
               var emin = pad(val.match(/\d+$/),2);
               endtime = ehour + ":" + emin;
+              tmpendtime = tmpehour  + ":" + emin;
               events += "DTEND:" + date + "T" + ehour + emin + "00\r\n";
               break;
           case cols[4]: // Harjoitus e.g. SUMMARY:Oheinen (Tua) 12:00-12:45
-            eventname = val;
+            eventname = encode_utf8(val);
             break;
           case cols[5]: //  Paikka
-            location = val;
+            location = encode_utf8(val);
             break;
           case cols[6]: //  Valmentaja
             coach = val;
@@ -391,7 +404,7 @@ URL;TYPE=Map:http://maps.google.com/maps?q=1055%20Fifth
     events += "SEQUENCE:0\r\n";
     events += "STATUS:CONFIRMED\r\n";
     // SUMMARY:Oheinen (name) 12:00-12:45
-    events += "SUMMARY:" + eventname + " (" + coach + ") " + starttime + "-" + endtime + "\r\n";
+    events += "SUMMARY:" + eventname + " (" + coach + ") " + tmpstarttime + "-" + tmpendtime + "\r\n";
     events += "TRANSP:OPAQUE\r\n";
     events += "END:VEVENT\r\n";
     
@@ -401,10 +414,28 @@ URL;TYPE=Map:http://maps.google.com/maps?q=1055%20Fifth
   //console.log('EVENTS: ' + events); 
 }
 
+//no need for encode/decode
+function encode_utf8( s ) {
+  var result = [];
+  var temp = "";
+  for (var i = 0; i < s.length; i++) {
+    var charCode = s.charCodeAt(i);
+      
+      if (s[i] === 'ä') {
+          temp += "ä";
+      } else {
+        temp += s[i];
+      }
+      //result.push(temp + String.fromCharCode(charCode));
+  }
+  return temp;
+  //return unescape(encodeURIComponent( s ));
+}
 
-var latin1_to_utf8 = function (s) {
-  return decodeURIComponent(escape(s));
-};
+function decode_utf8( s ) {
+  return decodeURIComponent( escape( s ) );
+}
+
 
 /*function getEventName(name) {
   switch (name) {
